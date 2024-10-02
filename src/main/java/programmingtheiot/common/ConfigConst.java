@@ -171,7 +171,8 @@ public class ConfigConst
 	 * Configuration Sections, Keys and Defaults
 	 */
 	
-	public static final String DEFAULT_CONFIG_FILE_NAME      = "../../../../../config/PiotConfig.props";
+	//  Setting the relative path for PiotConfig.props
+	public static final String DEFAULT_CONFIG_FILE_NAME      = "./config/PiotConfig.props";
 	public static final String DEFAULT_CRED_FILE_NAME        = "./cred/PiotCred.props";
 	public static final String DEFAULT_KEY_STORE_FILE_NAME   = "./cred/KeyStore.jks";
 	public static final String DEFAULT_TRUST_STORE_FILE_NAME = "./cred/TrustStore.jks";

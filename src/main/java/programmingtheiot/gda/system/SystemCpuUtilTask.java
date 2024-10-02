@@ -12,9 +12,17 @@ import java.lang.management.ManagementFactory;
 
 import programmingtheiot.common.ConfigConst;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+
+import java.util.logging.Logger;
+
+import programmingtheiot.common.ConfigConst;
+
 
 /**
- * Shell representation of class for student implementation.
+ * Class that extends from the abstract class BaseSystemUtilTask 
+ * to get values for System CPU Utilization.
  * 
  */
 public class SystemCpuUtilTask extends BaseSystemUtilTask
@@ -36,7 +44,11 @@ public class SystemCpuUtilTask extends BaseSystemUtilTask
 	@Override
 	public float getTelemetryValue()
 	{
-		return 0.0f;
+		// Get Operating System CPU Utilization using ManagementFactory module
+		OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+		double cpuUtil = mxBean.getSystemLoadAverage();
+
+		return (float) cpuUtil;
 	}
 	
 }
