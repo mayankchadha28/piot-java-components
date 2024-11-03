@@ -14,6 +14,10 @@ package programmingtheiot.gda.app;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.qpid.proton.InterruptException;
+
+import programmingtheiot.common.ConfigConst;
+import programmingtheiot.common.ConfigUtil;
 import programmingtheiot.gda.system.SystemPerformanceManager;
 
 /**
@@ -31,6 +35,7 @@ public class GatewayDeviceApp
 	public static final long DEFAULT_TEST_RUNTIME = 60000L;
 	
 	// private var's
+	private DeviceDataManager dataMgr = null;
 	
 	
 	// constructors
@@ -46,9 +51,9 @@ public class GatewayDeviceApp
 		
 		_Logger.info("Initializing GDA...");
 
-		this.sysPerfMgr = new SystemPerformanceManager();
+		// this.sysPerfMgr = new SystemPerformanceManager();
 		
-		parseArgs(args);
+		// parseArgs(args);
 	}
 	
 	
@@ -64,14 +69,31 @@ public class GatewayDeviceApp
 		GatewayDeviceApp gwApp = new GatewayDeviceApp(args);
 		
 		gwApp.startApp();
+
+		boolean runForever = 
+			ConfigUtil.getInstance().getBoolean(ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_RUN_FOREVER_KEY);
 		
-		try {
-			Thread.sleep(DEFAULT_TEST_RUNTIME);
-		} catch (InterruptedException e) {
-			// ignore
+		if(runForever){
+			try {
+				while(true){
+					Thread.sleep(2000L);
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+
+			gwApp.stopApp(0);
+
+		}else{
+			try {
+				Thread.sleep(DEFAULT_TEST_RUNTIME);
+			} catch (InterruptedException e) {
+					// ignore
+			}	
+			
+			gwApp.stopApp(0);
 		}
 		
-		gwApp.stopApp(0);
 	}
 	
 	
@@ -86,15 +108,16 @@ public class GatewayDeviceApp
 		_Logger.info("Starting GDA...");
 		
 		try {
-			
-			if(this.sysPerfMgr.startManager()){
-				_Logger.info("GDA started successfully.");
-			}else{
-				_Logger.warning("Failed to start system performance manager!");
 
-				stopApp(-1);
+			if(! ConfigUtil.getInstance().getBoolean(ConfigConst.GATEWAY_DEVICE, ConfigConst.TEST_EMPTY_APP_KEY)){
+				this.dataMgr = new DeviceDataManager();
 			}
-			
+
+			if(this.dataMgr != null){
+				this.dataMgr.startManager();
+			}
+
+			_Logger.info("GDA started successfully.");
 			
 		} catch (Exception e) {
 			_Logger.log(Level.SEVERE, "Failed to start GDA. Exiting.", e);
@@ -113,12 +136,12 @@ public class GatewayDeviceApp
 		_Logger.info("Stopping GDA...");
 		
 		try {
-			// TODO: Your code here
-			if(this.sysPerfMgr.stopManager()){
-				_Logger.log(Level.INFO, "GDA stopped successfully with exit code {0}.", code);
-			}else{
-				_Logger.warning("Failed to stop system performance manager");
+			
+			if(this.dataMgr != null){
+				this.dataMgr.stopManager();
 			}
+
+			_Logger.log(Level.INFO, "GDA stopped successfully with exit code {0}.", code);
 			
 			
 		} catch (Exception e) {

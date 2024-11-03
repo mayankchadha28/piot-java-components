@@ -13,7 +13,7 @@ import java.io.Serializable;
 import programmingtheiot.common.ConfigConst;
 
 /**
- * Shell representation of class for student implementation.
+ * Instantiates the base class and also defines getters and setters for CPU, Disk and Memory.
  *
  */
 public class SystemPerformanceData extends BaseIotData implements Serializable
@@ -22,6 +22,9 @@ public class SystemPerformanceData extends BaseIotData implements Serializable
 	
 	
 	// private var's
+	private float cpuUtil = ConfigConst.DEFAULT_VAL;
+	private float diskUtil = ConfigConst.DEFAULT_VAL;
+	private float memUtil = ConfigConst.DEFAULT_VAL;
 	
     
 	// constructors
@@ -29,6 +32,8 @@ public class SystemPerformanceData extends BaseIotData implements Serializable
 	public SystemPerformanceData()
 	{
 		super();
+
+		super.setName(ConfigConst.SYS_PERF_DATA);
 	}
 	
 	
@@ -36,31 +41,34 @@ public class SystemPerformanceData extends BaseIotData implements Serializable
 	
 	public float getCpuUtilization()
 	{
-		return 0.0f;
+		return this.cpuUtil;
 	}
 	
 	public float getDiskUtilization()
 	{
-		return 0.0f;
+		return diskUtil;
 	}
 	
 	public float getMemoryUtilization()
 	{
-		return 0.0f;
+		return memUtil;
 	}
 	
 	public void setCpuUtilization(float val)
 	{
+		this.cpuUtil = val;
 	}
 	
 	public void setDiskUtilization(float val)
 	{
+		this.diskUtil = val;
 	}
 	
 	public void setMemoryUtilization(float val)
 	{
+		this.memUtil = val;
 	}
-	
+
 	/**
 	 * Returns a string representation of this instance. This will invoke the base class
 	 * {@link #toString()} method, then append the output from this call.
@@ -87,6 +95,12 @@ public class SystemPerformanceData extends BaseIotData implements Serializable
 	 */
 	protected void handleUpdateData(BaseIotData data)
 	{
+		if (data instanceof SystemPerformanceData){
+			SystemPerformanceData sData = (SystemPerformanceData) data;
+			this.setCpuUtilization(sData.getCpuUtilization());
+			this.setDiskUtilization(sData.getDiskUtilization());
+			this.setMemoryUtilization(sData.getMemoryUtilization());
+		}
 	}
 	
 }
