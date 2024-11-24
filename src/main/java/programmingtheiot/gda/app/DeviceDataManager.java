@@ -45,8 +45,6 @@ public class DeviceDataManager implements IDataMessageListener
 	private static final Logger _Logger =
 		Logger.getLogger(DeviceDataManager.class.getName());
 	
-	// private var's
-	
 	private boolean enableMqttClient = true;
 	private boolean enableCoapServer = false;
 	private boolean enableCloudClient = false;
@@ -75,6 +73,8 @@ public class DeviceDataManager implements IDataMessageListener
 		
 		this.enableCoapServer = configUtil.getBoolean(
 			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_COAP_SERVER_KEY);
+
+			_Logger.warning("CoAP Status is: "+ this.enableCoapServer);
 
 		this.enableCloudClient = configUtil.getBoolean(
 			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_CLOUD_CLIENT_KEY);
@@ -170,13 +170,49 @@ public class DeviceDataManager implements IDataMessageListener
 	
 	public void setActuatorDataListener(String name, IActuatorDataListener listener)
 	{
+		if(listener != null){
+			this.actuatorDataListener = listener;
+		}
 	}
 	
 	public void startManager()
 	{
+		// System Performance Manager
 		if(this.sysPerfMgr != null){
 			this.sysPerfMgr.startManager();
 		}
+
+		//MQTT
+		if(this.mqttClient != null){
+			if(this.mqttClient.connectClient()){
+				_Logger.info("Successfully connected to MQTT client to broker.");
+
+				//Subscriptions
+
+				// Config file data
+				int qos = ConfigConst.DEFAULT_QOS;
+
+				// Action
+
+				this.mqttClient.subscribeToTopic(ResourceNameEnum.GDA_MGMT_STATUS_CMD_RESOURCE, qos);
+				this.mqttClient.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE, qos);
+				this.mqttClient.subscribeToTopic(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, qos);
+				this.mqttClient.subscribeToTopic(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, qos);
+			}else{
+				_Logger.severe("Failed to connect MQTT client to broker.");
+			}
+		}
+
+		// CoAP
+		if(this.enableCoapServer && this.coapServer != null){
+			// System.out.println("START CoAP SERVER");
+			if(this.coapServer.startServer()){
+				_Logger.info("CoAP server started.");
+			}else{
+				_Logger.severe("Failed to start CoAP server. check log file for details");
+			}
+		}
+
 	}
 	
 	public void stopManager()
@@ -184,13 +220,47 @@ public class DeviceDataManager implements IDataMessageListener
 		if(this.sysPerfMgr !=  null){
 			this.sysPerfMgr.stopManager();
 		}
+
+		if(this.mqttClient != null){
+			// UNsubscribes
+			this.mqttClient.unsubscribeFromTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE);
+			this.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE);
+			this.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE);
+			this.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE);
+
+			if (this.mqttClient.disconnectClient()){
+				_Logger.info("Successfully disconnected MQTT client from broker.");
+			}else{
+				_Logger.severe("Failed to disconnect MQTT client from broker.");
+			}
+		}
+
+		// CoAP
+		if(this.enableCoapServer && this.coapServer != null){
+		
+			if(this.coapServer.stopServer()){
+				_Logger.info("CoAP server stopped.");
+			}else{
+				_Logger.severe("Failed to stop CoAP server. Check log file for details.");
+			}
+		}
 	}
 
 	
 	// private methods
 
 	private void handleIncomingDataAnalysis(ResourceNameEnum resourceName, ActuatorData data){
-		_Logger.info("handleIncomingDataAnalysis called");
+		_Logger.info("Analyzing incoming actuator data: " + data.getName());
+
+		if(data.isResponseFlagEnabled()){
+
+		}else{
+			if(this.actuatorDataListener != null){
+				this.actuatorDataListener.onActuatorDataUpdate(data);
+			}
+		}
+
+
 	}	
 
 	private boolean handleUpstreamTransmission(ResourceNameEnum resourceName, String jsonData, int qos){
@@ -216,11 +286,16 @@ public class DeviceDataManager implements IDataMessageListener
 		}
 
 		if(this.enableMqttClient){
-			// TODO
+			// mqtt client instance
+			this.mqttClient = new MqttClientConnector();
+
+			this.mqttClient.setDataMessageListener(this);
+
 		}
 
 		if(this.enableCoapServer){
-			// TODO
+			_Logger.info("Test Enter here");
+			this.coapServer = new CoapServerGateway(this);
 		}
 
 		if(this.enableCloudClient){
