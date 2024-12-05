@@ -63,21 +63,92 @@ public class MqttClientControlPacketTest
 	@Test
 	public void testConnectAndDisconnect()
 	{
-		// TODO: implement this test
+		assertTrue(this.mqttClient.connectClient());
+		_Logger.info("Mqtt Client Connected to Broker");
+
+		assertTrue(this.mqttClient.disconnectClient());
+		_Logger.info("Mqtt Client disconnected from Broker");
+
 	}
 	
 	@Test
 	public void testServerPing()
 	{
-		// TODO: implement this test
+		int delay = ConfigUtil.getInstance().getInteger(ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.KEEP_ALIVE_KEY, ConfigConst.DEFAULT_KEEP_ALIVE);
+
+		assertTrue(this.mqttClient.connectClient());
+
+		try {
+			Thread.sleep(delay * 3);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.mqttClient.disconnectClient());
+
+		_Logger.info("Mqtt server ping should be triggered");
+
 	}
 	
 	@Test
 	public void testPubSub()
 	{
-		// TODO: implement this test
-		// 
-		// IMPORTANT: be sure to use QoS 1 and 2 to see ALL control packets
+		assertTrue(this.mqttClient.connectClient());
+		_Logger.info("Mqtt publish with Qos 0");
+		
+		assertTrue(this.mqttClient.publishMessage(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, "Mqtt Test publish with QOS 0", 0));
+
+		try {
+			Thread.sleep(5000);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.mqttClient.subscribeToTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, 0));
+
+		try {
+			Thread.sleep(10000);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		_Logger.info("Mqtt publish with Qos 1");
+		assertTrue(this.mqttClient.publishMessage(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, "Mqtt Test publish with QOS 1", 1));
+
+		try {
+			Thread.sleep(5000);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.mqttClient.subscribeToTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, 1));
+		
+		try {
+			Thread.sleep(10000);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		_Logger.info("Mqtt publish with Qos 2");
+		assertTrue(this.mqttClient.publishMessage(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, "Mqtt Test publish with QOS 2", 2));
+
+		try {
+			Thread.sleep(5000);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.mqttClient.subscribeToTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, 2));
+
+		try {
+			Thread.sleep(15000);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.mqttClient.unsubscribeFromTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE));
+		assertTrue(this.mqttClient.disconnectClient());
+
 	}
 	
 }

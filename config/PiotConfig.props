@@ -40,15 +40,15 @@ enableCrypt    = True
 #
 [Mqtt.GatewayService]
 credFile       = ./cred/PiotMqttCred.props
-certFile       = ./cert/PiotMqttLocalCertFile.pem
+certFile       = ./cert/ca.crt
 host           = localhost
-port           = 1883
+port           = 8883
 securePort     = 8883
 defaultQoS     = 0
 keepAlive      = 60
 enableAuth     = False
-enableCrypt    = False
-useAsyncClient = False
+enableCrypt    = True
+useAsyncClient = True
 
 #
 # CoAP client and server configuration information
@@ -60,7 +60,7 @@ host           = localhost
 port           = 5683
 securePort     = 5684
 enableAuth     = False
-enableCrypt    = False
+enableCrypt    = True
 enableConfirmedMsgs = True
 
 #
@@ -70,9 +70,9 @@ enableConfirmedMsgs = True
 deviceLocationID        = gatewaydevice001
 enableLogging           = True
 pollCycleSecs           = 60
-enableMqttClient        = False
-enableCoapServer        = True
-enableCoapClient        = True
+enableMqttClient        = True
+enableCoapServer        = False
+enableCoapClient        = False
 enableCloudClient       = False
 enableSmtpClient        = False
 enablePersistenceClient = False
@@ -80,3 +80,19 @@ enableSystemPerformance = True
 testGdaDataPath         = /tmp/gda-data
 testCdaDataPath         = /tmp/cda-data
 testEmptyApp            = False
+
+# if true, GDA will process humidity change events from CDA
+handleHumidityChangeOnDevice = True
+
+# min seconds between readings before triggering actuation events
+humidityMaxTimePastThreshold = 10
+
+# ideal average humidity level(% relative)
+nominalHumiditySetting = 40.0
+
+# min value before turning on humidifier (% relative)
+triggerHumidifierFloor = 30.0
+
+# max value before turning off humidifier (% relative)
+triggerHumidifierCeiling = 50.0
+
