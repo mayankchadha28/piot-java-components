@@ -61,7 +61,7 @@ public class DeviceDataManager implements IDataMessageListener
 	
 	private IActuatorDataListener actuatorDataListener = null;
 	private IPubSubClient mqttClient = null;
-	private IPubSubClient cloudClient = null;
+	private CloudClientConnector cloudClient = null;
 	private IPersistenceClient persistenceClient = null;
 	private IRequestResponseClient smtpClient = null;
 	private CoapServerGateway coapServer = null;
@@ -163,7 +163,23 @@ public class DeviceDataManager implements IDataMessageListener
 	@Override
 	public boolean handleActuatorCommandRequest(ResourceNameEnum resourceName, ActuatorData data)
 	{
-		return false;
+		if(data != null){
+			_Logger.log(Level.FINE,
+			"Actuator request received: {0}. Message: {1}",
+			new Object[] {resourceName.getResourceName(), Integer.valueOf((data.getCommand()))});
+
+			if(data.hasError()){
+				_Logger.warning("Error flag set for ActuatorData instance");
+			}
+
+			int qos = ConfigConst.DEFAULT_QOS;
+
+			this.sendActuatorCommandtoCda(resourceName, data);
+
+			return true;
+		}else{
+			return false;
+		}
 	}
 
 	@Override
@@ -219,6 +235,18 @@ public class DeviceDataManager implements IDataMessageListener
 				_Logger.warning("Error flag set for SystemPerformancedata instance.");
 			}
 
+			String jsonData = DataUtil.getInstance().systemPerformanceDataToJson(data);
+
+			_Logger.fine("JSON [SystemPerformanceData] ->" + jsonData);
+
+			int qos = ConfigConst.DEFAULT_QOS;
+
+			if(this.enablePersistenceClient && this.persistenceClient != null){
+				this.persistenceClient.storeData(resourceName.getResourceName(), qos, data);
+			}
+
+			this.handleUpstreamTransmission(resourceName, jsonData, qos);
+
 			return true;
 		}else{
 			return false;
@@ -271,6 +299,15 @@ public class DeviceDataManager implements IDataMessageListener
 			}
 		}
 
+		// Cloud
+		if(this.enableCloudClient && this.cloudClient != null){
+			if(this.cloudClient.connectClient()){
+				_Logger.info("Cloud client connected");
+			}else{
+				_Logger.severe("Failed to start Cloud client. check log for details.");
+			}
+		}
+
 	}
 	
 	public void stopManager()
@@ -300,6 +337,15 @@ public class DeviceDataManager implements IDataMessageListener
 				_Logger.info("CoAP server stopped.");
 			}else{
 				_Logger.severe("Failed to stop CoAP server. Check log file for details.");
+			}
+		}
+
+		if(this.enableCloudClient && this.cloudClient != null){
+		
+			if(this.cloudClient.disconnectClient()){
+				_Logger.info("Cloud client stopped.");
+			}else{
+				_Logger.severe("Failed to stop Cloud client. Check log file for details.");
 			}
 		}
 	}
@@ -405,6 +451,12 @@ public class DeviceDataManager implements IDataMessageListener
 	private void handleUpstreamTransmission(ResourceNameEnum resourceName, String jsonData, int qos){
 		_Logger.info("TODO: Send JSON data to cloud service: " + resourceName);
 
+		if(this.cloudClient != null){
+			if(this.cloudClient.sendEdgeDataToCloud(resourceName, jsonData)){
+				_Logger.fine("Sent JSON data upstream to CSP.");
+			}
+		}
+
 		// return false;
 	}	
 	/**
@@ -438,7 +490,7 @@ public class DeviceDataManager implements IDataMessageListener
 		}
 
 		if(this.enableCloudClient){
-			// TODO
+			this.cloudClient = new CloudClientConnector();
 		}
 
 		if (this.enablePersistenceClient){
