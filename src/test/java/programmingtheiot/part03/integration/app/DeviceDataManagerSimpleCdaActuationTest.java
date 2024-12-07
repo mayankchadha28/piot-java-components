@@ -99,6 +99,7 @@ public class DeviceDataManagerSimpleCdaActuationTest
 		devDataMgr.stopManager();
 	}
 
+	
 	private void generateAndProcessHumiditySensorDataSequence(
 		DeviceDataManager ddm, float nominalVal, float lowVal, float highVal, int delay
 	){

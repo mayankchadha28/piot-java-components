@@ -200,7 +200,7 @@ public class ConfigConst
 	public static final String ENABLE_PERSISTENCE_CLIENT_KEY = "enablePersistenceClient";
 	public static final String ENABLE_SYSTEM_PERF_KEY        = "enableSystemPerformance";
 	
-	public static final String ENABLE_RUN_FOREVER_KEY        = "enableRunForever";
+	public static final String ENABLE_RUN_FOREVER_KEY        = "runForever";
 	
 	public static final String AWS_CLOUD_SVC_NAME     = "AWS";
 	public static final String AZURE_CLOUD_SVC_NAME   = "Azure";

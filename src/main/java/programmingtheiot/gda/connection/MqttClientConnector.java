@@ -35,6 +35,8 @@ import java.io.File;
 import javax.net.ssl.SSLSocketFactory;
 
 import programmingtheiot.common.SimpleCertManagementUtil;
+import programmingtheiot.data.DataUtil;
+import programmingtheiot.data.SensorData;
 
 
 
@@ -287,6 +289,9 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 		this.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE, qos);
 		this.subscribeToTopic(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, qos);
 		this.subscribeToTopic(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, qos);
+
+
+
 	}
 
 	@Override
@@ -305,6 +310,14 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 	public void messageArrived(String topic, MqttMessage msg) throws Exception
 	{
 		_Logger.info("MQTT message arrived on topic: "+ topic + "'");
+
+		SensorData sensorData = DataUtil.getInstance().jsonToSensorData(new String(msg.getPayload()));
+		
+		if(this.dataMsgListener != null){
+			_Logger.info("................Handling Sensor Data.................");
+			this.dataMsgListener.handleSensorMessage(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, sensorData);
+		}
+
 	}
 
 	
