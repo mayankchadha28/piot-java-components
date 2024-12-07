@@ -122,7 +122,7 @@ public class DeviceDataManager implements IDataMessageListener
 			configUtil.getFloat(ConfigConst.GATEWAY_DEVICE, "triggerHumidifierCeiling");
 
 		if(this.humidityMaxTimePastThreshold < 10 || this.humidityMaxTimePastThreshold > 7200){
-			this.humidityMaxTimePastThreshold = 300;
+			this.humidityMaxTimePastThreshold = 10;
 		}
 		
 		initConnections();
@@ -197,6 +197,7 @@ public class DeviceDataManager implements IDataMessageListener
 	@Override
 	public boolean handleSensorMessage(ResourceNameEnum resourceName, SensorData data)
 	{
+		// _Logger.warning("................handleSensorMessage Method Called..................");
 		if(data != null){
 			_Logger.fine("Handling sensor message: " + data.getName());
 
@@ -358,6 +359,7 @@ public class DeviceDataManager implements IDataMessageListener
 		// check if resource or Sensordata for type
 		if(data.getTypeID() == ConfigConst.HUMIDITY_SENSOR_TYPE){
 			handleHumiditySensorAnalysis(resourceName, data);
+			
 		}
 		
 	}
@@ -369,22 +371,31 @@ public class DeviceDataManager implements IDataMessageListener
 		boolean isLow = data.getValue() < this.triggerHumidifierFloor;
 		boolean isHigh = data.getValue() > this.triggerHumidifierCeiling;
 
+		// ActuatorData ads = new ActuatorData();
+		// ads.setName(ConfigConst.HUMIDIFIER_ACTUATOR_NAME);
+		// ads.setLocationID(data.getLocationID());
+		// ads.setTypeID(ConfigConst.HUMIDIFIER_ACTUATOR_TYPE);
+		// ads.setValue(this.nominalHumiditySetting);
+		// sendActuatorCommandtoCda(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, ads);
+
+
 		if(isLow || isHigh){
-				_Logger.fine("Humidifier data from CDA exceeded nominal range.");
+				_Logger.info("Humidifier data from CDA exceeded nominal range.");
 	
-				if(this.latestHumidifierActuatorData == null){
+				if(this.latestHumiditySensorData == null){
 					// set properties and exit
 					this.latestHumiditySensorData = data;
 					this.latestHumiditySensorTimeStamp = getDateTimeFromData(data);
 
-					_Logger.fine(
+					_Logger.info(
 						"Starting humidity nominal exception timer. Waiting for seconds: " +
 						this.humidityMaxTimePastThreshold
 					);
 
-					return;
+					//return;
 	
 				} else {
+					// _Logger.info(".....................I am Here...................");
 					OffsetDateTime curHumiditySensorTimeStamp = getDateTimeFromData(data);
 
 					long diffSeconds = 
@@ -399,6 +410,8 @@ public class DeviceDataManager implements IDataMessageListener
 						ad.setLocationID(data.getLocationID());
 						ad.setTypeID(ConfigConst.HUMIDIFIER_ACTUATOR_TYPE);
 						ad.setValue(this.nominalHumiditySetting);
+
+						_Logger.info("******* Hudifier Actuation Triggered ***********");
 
 						if(isLow){
 							ad.setCommand(ConfigConst.ON_COMMAND);
