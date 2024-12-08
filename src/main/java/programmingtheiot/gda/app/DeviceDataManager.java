@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.pool.ConnFactory;
+import org.apache.qpid.proton.amqp.messaging.Data;
 import org.eclipse.californium.core.config.CoapConfig;
 
 import com.amazonaws.auth.policy.Resource;
@@ -185,13 +186,31 @@ public class DeviceDataManager implements IDataMessageListener
 	@Override
 	public boolean handleIncomingMessage(ResourceNameEnum resourceName, String msg)
 	{
-		if(msg != null){
-			_Logger.info("Handling incoming generic message: " + msg);
+		if(resourceName != null && msg != null){
+			try {
+				if(resourceName == ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE){
+					_Logger.info("Handling incoming ActuatorData message: "+ msg);
 
-			return true;
+					ActuatorData ad = DataUtil.getInstance().jsonToActuatorData(msg);
+					String jsonData = DataUtil.getInstance().actuatorDataToJson(ad);
+
+					if(this.mqttClient != null){
+						_Logger.fine("Publishing data to MQTT broker: "+ jsonData);
+						return this.mqttClient.publishMessage(resourceName, jsonData, 0);
+					}
+				}else{
+					_Logger.warning("Failed to parse incoming message. Unknown type: "+msg);
+					return false;
+				}
+			} catch (Exception e) {
+				// TODO: handle exception
+				_Logger.log(Level.WARNING, "Failed to process incoming message for resource: "+ resourceName, e);
+			}
 		}else{
-			return false;
+			_Logger.warning("Incoming message has no data. Ignoring for resource: " + resourceName);
 		}
+
+		return false;
 	}
 
 	@Override
@@ -264,10 +283,6 @@ public class DeviceDataManager implements IDataMessageListener
 	
 	public void startManager()
 	{
-		// System Performance Manager
-		if(this.sysPerfMgr != null){
-			this.sysPerfMgr.startManager();
-		}
 
 		//MQTT
 		if(this.mqttClient != null){
@@ -309,6 +324,11 @@ public class DeviceDataManager implements IDataMessageListener
 			}
 		}
 
+		// System Performance Manager
+		if(this.sysPerfMgr != null){
+			this.sysPerfMgr.startManager();
+		}
+
 	}
 	
 	public void stopManager()
@@ -341,6 +361,7 @@ public class DeviceDataManager implements IDataMessageListener
 			}
 		}
 
+		// Cloud
 		if(this.enableCloudClient && this.cloudClient != null){
 		
 			if(this.cloudClient.disconnectClient()){
@@ -462,12 +483,23 @@ public class DeviceDataManager implements IDataMessageListener
 	}
 
 	private void handleUpstreamTransmission(ResourceNameEnum resourceName, String jsonData, int qos){
-		_Logger.info("TODO: Send JSON data to cloud service: " + resourceName);
+		_Logger.info("TODO: Sending JSON data to cloud service: " + resourceName);
 
 		if(this.cloudClient != null){
-			if(this.cloudClient.sendEdgeDataToCloud(resourceName, jsonData)){
-				_Logger.fine("Sent JSON data upstream to CSP.");
+
+			if(resourceName == ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE){
+				SensorData data = DataUtil.getInstance().jsonToSensorData(jsonData);
+				this.cloudClient.sendEdgeDataToCloud(resourceName, data);
+
+				// return true;
+			}else if(resourceName ==ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE){
+				SystemPerformanceData data = DataUtil.getInstance().jsonToSystemPerformanceData(jsonData);
+				this.cloudClient.sendEdgeDataToCloud(resourceName, data);
 			}
+
+			// if(this.cloudClient.sendEdgeDataToCloud(resourceName, jsonData)){
+			// 	_Logger.fine("Sent JSON data upstream to CSP.");
+			// }
 		}
 
 		// return false;

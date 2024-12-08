@@ -101,7 +101,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 		super();
 
 		// initClientParameters(ConfigConst.MQTT_GATEWAY_SERVICE);
-
+		
 
 		ConfigUtil configUtil = ConfigUtil.getInstance();
 
@@ -161,6 +161,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 	{
 		try {
 			if(this.mqttClient == null){
+				
 				this.mqttClient = new MqttAsyncClient(this.brokerAddr, this.clientID, this.persistence);
 				this.mqttClient.setCallback(this);
 			}	
@@ -168,6 +169,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 			if(! this.mqttClient.isConnected()){
 				_Logger.info("MQTT client connecting to broker:" + this.brokerAddr);
 				this.mqttClient.connect(this.connOpts);
+				
 				return true;
 
 			}else{
@@ -260,7 +262,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 	}
 
 	protected boolean subscribeToTopic(String topicName, int qos){
-		return subscribeToTopic(topicName, qos);
+		return subscribeToTopic(topicName, qos, null);
 	}
 
 	protected boolean subscribeToTopic(String topicName, int qos, IMqttMessageListener listener){
@@ -374,10 +376,23 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 		_Logger.info("MQTT connection successful (is reconnect = " + reconnect + "). Broker: " + serverURI);
 
 		int qos= 1;
-		
-		this.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE, qos);
-		this.subscribeToTopic(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, qos);
-		this.subscribeToTopic(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, qos);
+
+		try {
+			if (! this.useCloudGatewayConfig){
+				_Logger.info("Subscribing to topic: " + ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE.getResourceName());
+
+				this.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE, qos);
+				this.subscribeToTopic(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, qos);
+				this.subscribeToTopic(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, qos);
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			_Logger.warning("Failed to subscribe to CDA actuator response topic");
+		}
+
+		if(this.connListener != null){
+			this.connListener.onConnect();
+		}
 
 
 
