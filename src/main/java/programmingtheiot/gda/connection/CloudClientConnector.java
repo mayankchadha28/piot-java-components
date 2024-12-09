@@ -41,7 +41,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 	// private var's
 	private String topicPrefix = "";
 	private MqttClientConnector mqttClient = null;
-	private IDataMessageListener dataMessageListener = null;
+	private IDataMessageListener dataMsgListener = null;
 
 	private int qosLevel = 1;
 
@@ -146,8 +146,9 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 	public boolean setDataMessageListener(IDataMessageListener listener)
 	{
 		// return false;
+		_Logger.info(".......Listener Empty...........");
 		if(listener != null){
-			this.dataMessageListener = listener;
+			this.dataMsgListener = listener;
 			return true;
 		}
 
@@ -208,9 +209,13 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 		if(this.mqttClient != null && this.mqttClient.isConnected()){
 			topicName = createTopicName(resource);
 
+			_Logger.info("...............Entered Here: Success...............");
+
 			this.mqttClient.subscribeToTopic(topicName, this.qosLevel);
 
 			success = true;
+
+			
 		}else{
 			_Logger.warning("Subscription methods only available for MQTT. No MQTT connection to broker. Ignoring.Topic: " + topicName);
 		}
@@ -245,15 +250,16 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 	
 	private class LedEnablementMessageListener implements IMqttMessageListener
 	{
-		private IDataMessageListener dataMessageListener = null;
+		private IDataMessageListener dataMsgListener = null;
 
 		private ResourceNameEnum resource = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE;
 
 		private int typeID = ConfigConst.LED_ACTUATOR_TYPE;
 		private String itemName = ConfigConst.LED_ACTUATOR_NAME;
 
-		LedEnablementMessageListener(IDataMessageListener dataMessageListener){
-			this.dataMessageListener = dataMessageListener;
+		LedEnablementMessageListener(IDataMessageListener dataMsgListener){
+			this.dataMsgListener = dataMsgListener;
+			// _Logger.info("YO!!!..............");
 		}
 
 		public ResourceNameEnum getResource(){
@@ -269,11 +275,13 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 				ActuatorData actuatorData = 
 					DataUtil.getInstance().jsonToActuatorData(jsonData);
 
-					actuatorData.setLocationID(ConfigConst.CONSTRAINED_DEVICE);
+					actuatorData.setLocationID("constraineddevice001");
+					actuatorData.setCommand(1);
 					actuatorData.setTypeID(this.typeID);
 					actuatorData.setName(this.itemName);
 
 					int val = (int) actuatorData.getValue();
+					//_Logger.info("............LED VAL: "+ val+".......");
 
 					switch(val){
 						case ConfigConst.ON_COMMAND:
@@ -292,11 +300,13 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 
 					//Passing ActuatorData messages from this method to I
 					//DataMessageListener (DeviceDataManager)
-
-					if(this.dataMessageListener != null){
+					
+					
+					if(this.dataMsgListener != null){
+						
 						jsonData = DataUtil.getInstance().actuatorDataToJson(actuatorData);
 
-						this.dataMessageListener.handleIncomingMessage(
+						this.dataMsgListener.handleIncomingMessage(
 							ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, jsonData);
 					}
 			}catch (Exception e){
@@ -309,7 +319,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 	public void onConnect(){
 		_Logger.info("Handling CSP subscriptions and device topic provisioning...");
 
-		LedEnablementMessageListener ledListener = new LedEnablementMessageListener(this.dataMessageListener);
+		LedEnablementMessageListener ledListener = new LedEnablementMessageListener(this.dataMsgListener);
 
 		ActuatorData ad = new ActuatorData();
 		ad.setAsResponse();

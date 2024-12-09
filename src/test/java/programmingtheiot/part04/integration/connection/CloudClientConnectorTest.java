@@ -72,7 +72,7 @@ public class CloudClientConnectorTest
 	/**
 	 * Test method for {@link programmingtheiot.gda.connection.UbidotsMqttCloudClientConnector#connectClient()}.
 	 */
-	@Test
+	//@Test
 	public void testCloudClientConnectAndDisconnect()
 	{
 		this.cloudClient.setDataMessageListener(new DefaultDataMessageListener());
@@ -117,7 +117,7 @@ public class CloudClientConnectorTest
 	/**
 	 * Test method for {@link programmingtheiot.gda.connection.UbidotsMqttCloudClientConnector#publishMessage(programmingtheiot.common.ResourceNameEnum, java.lang.String, int)}.
 	 */
-	//@Test
+	@Test
 	public void testPublishAndSubscribe()
 	{
 		this.cloudClient.setDataMessageListener(new DefaultDataMessageListener());
@@ -277,4 +277,75 @@ public class CloudClientConnectorTest
 
 	}
 	
+	//@Test
+	public void testSubscribe(){
+		this.cloudClient.setDataMessageListener(new DefaultDataMessageListener());
+		
+		assertTrue(this.cloudClient.connectClient());
+		
+		try {
+			// sleep for a couple of seconds or so...
+			// 
+			// TODO: if cloudClient delegates to MqttClientConnector,
+			// which in turn delegates to MqttAsyncClient, the timing
+			// of the sleep cycle may need to be manually adjusted to
+			// allow the connection to complete
+			
+			Thread.sleep(2000L);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.cloudClient.subscribeToCloudEvents(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE));
+
+		try {
+			// sleep for a few seconds...
+			// 
+			// TODO: if cloudClient delegates to MqttClientConnector,
+			// which in turn delegates to MqttAsyncClient, the timing
+			// of the sleep cycle may need to be manually adjusted to
+			// allow the connection to complete (even though the method
+			// call may assume success if using an async connect)
+			
+			Thread.sleep(5000L);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		try {
+			// sleep for half a minute or so...
+			
+			Thread.sleep(30000L);
+		} catch (Exception e) {
+			// ignore
+		}
+		
+		assertTrue(this.cloudClient.unsubscribeFromCloudEvents(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE));
+
+		try {
+			// sleep for a minute or so...
+			
+			Thread.sleep(50000L);
+		} catch (Exception e) {
+			// ignore
+		}
+
+		assertTrue(this.cloudClient.disconnectClient());
+
+		try {
+			// sleep for a couple of seconds or so...
+			// 
+			// TODO: if cloudClient delegates to MqttClientConnector,
+			// which in turn delegates to MqttAsyncClient, the timing
+			// of the sleep cycle may need to be manually adjusted to
+			// allow the disconnect to complete (even though the method
+			// call may assume success if using an async disconnect)
+			
+			Thread.sleep(2000L);
+		} catch (Exception e) {
+			// ignore
+		}
+
+
+	}
 }

@@ -75,7 +75,7 @@ public class MqttClientConnectorTest
 	/**
 	 * Test method for {@link programmingtheiot.gda.connection.MqttClientConnector#connectClient()}.
 	 */
-	// @Test
+	@Test
 	public void testConnectAndDisconnect()
 	{
 		int delay = ConfigUtil.getInstance().getInteger(ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.KEEP_ALIVE_KEY, ConfigConst.DEFAULT_KEEP_ALIVE);
@@ -238,7 +238,7 @@ public class MqttClientConnectorTest
 		assertTrue(this.mqttClient.disconnectClient());
 	}
 
-	@Test
+	//@Test
 	public void testActuatorCommandResponseSubscription(){
 		int qos = 0;
 

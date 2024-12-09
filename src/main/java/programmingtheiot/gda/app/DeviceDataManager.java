@@ -189,6 +189,7 @@ public class DeviceDataManager implements IDataMessageListener
 		if(resourceName != null && msg != null){
 			try {
 				if(resourceName == ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE){
+					
 					_Logger.info("Handling incoming ActuatorData message: "+ msg);
 
 					ActuatorData ad = DataUtil.getInstance().jsonToActuatorData(msg);
@@ -522,6 +523,7 @@ public class DeviceDataManager implements IDataMessageListener
 		}
 
 		if(this.enableMqttClient){
+			
 			// mqtt client instance
 			this.mqttClient = new MqttClientConnector();
 
@@ -536,6 +538,7 @@ public class DeviceDataManager implements IDataMessageListener
 
 		if(this.enableCloudClient){
 			this.cloudClient = new CloudClientConnector();
+			this.cloudClient.setDataMessageListener(this);
 		}
 
 		if (this.enablePersistenceClient){
