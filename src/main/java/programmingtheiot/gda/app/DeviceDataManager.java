@@ -306,6 +306,11 @@ public class DeviceDataManager implements IDataMessageListener
 			}
 		}
 
+		// System Performance Manager
+		if(this.sysPerfMgr != null){
+			this.sysPerfMgr.startManager();
+		}
+
 		// CoAP
 		if(this.enableCoapServer && this.coapServer != null){
 			// System.out.println("START CoAP SERVER");
@@ -325,9 +330,12 @@ public class DeviceDataManager implements IDataMessageListener
 			}
 		}
 
-		// System Performance Manager
-		if(this.sysPerfMgr != null){
-			this.sysPerfMgr.startManager();
+		if(this.enablePersistenceClient && this.persistenceClient != null){
+			if(this.persistenceClient.connectClient()){
+				_Logger.info("Redis client connected");
+			}else{
+				_Logger.severe("Failed to start Rloud client. check log for details.");
+			}
 		}
 
 	}
@@ -369,6 +377,14 @@ public class DeviceDataManager implements IDataMessageListener
 				_Logger.info("Cloud client stopped.");
 			}else{
 				_Logger.severe("Failed to stop Cloud client. Check log file for details.");
+			}
+		}
+
+		if(this.enablePersistenceClient && this.persistenceClient != null){
+			if(this.persistenceClient.disconnectClient()){
+				_Logger.info("Redis client stopped");
+			}else{
+				_Logger.severe("Failed to start Redis client. check log for details.");
 			}
 		}
 	}
@@ -498,6 +514,11 @@ public class DeviceDataManager implements IDataMessageListener
 				this.cloudClient.sendEdgeDataToCloud(resourceName, data);
 			}
 
+			if(resourceName == ResourceNameEnum.GDA_SYSTEM_PERF_MSG_RESOURCE){
+				SystemPerformanceData data = DataUtil.getInstance().jsonToSystemPerformanceData(jsonData);
+				this.cloudClient.sendEdgeDataToCloud(resourceName, data);
+			}
+
 			// if(this.cloudClient.sendEdgeDataToCloud(resourceName, jsonData)){
 			// 	_Logger.fine("Sent JSON data upstream to CSP.");
 			// }
@@ -542,7 +563,7 @@ public class DeviceDataManager implements IDataMessageListener
 		}
 
 		if (this.enablePersistenceClient){
-			// OPTIONAL TODO
+			this.persistenceClient = new RedisPersistenceAdapter();
 		}
 	}
 

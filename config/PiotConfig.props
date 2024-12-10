@@ -24,6 +24,12 @@ enableCrypt    = True
 baseUrl        = https://stem.ubidots.com/api/v1.6/
 baseTopic      = /v1.6/devices/
 
+[Data.GatewayService]
+credFile = ./cred/PiotPersistenceCred.props
+host = localhost
+port = 6379
+enableCrypt = False
+
 #
 # SMTP client configuration information
 #
@@ -40,7 +46,7 @@ enableCrypt    = True
 #
 [Mqtt.GatewayService]
 credFile       = ./cred/PiotMqttCred.props
-certFile       = ./cert/server.crt
+certFile       = ./cert/ca.crt
 host           = localhost
 port           = 1883
 securePort     = 8883

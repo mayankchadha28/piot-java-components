@@ -276,7 +276,6 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 					DataUtil.getInstance().jsonToActuatorData(jsonData);
 
 					actuatorData.setLocationID("constraineddevice001");
-					actuatorData.setCommand(1);
 					actuatorData.setTypeID(this.typeID);
 					actuatorData.setName(this.itemName);
 
@@ -287,11 +286,13 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 						case ConfigConst.ON_COMMAND:
 							_Logger.info("Received LED enablement message [ON]/");
 							actuatorData.setStateData("LED switching ON");
+							actuatorData.setCommand(ConfigConst.ON_COMMAND);
 							break;
 
 						case ConfigConst.OFF_COMMAND:
 							_Logger.info("Received LED enablement message [OFF]/");
 							actuatorData.setStateData("LED switching OFF");
+							actuatorData.setCommand(ConfigConst.OFF_COMMAND);
 							break;
 
 						default:
